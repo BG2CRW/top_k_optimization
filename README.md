@@ -1,7 +1,5 @@
 # top_k_optimization in PyTorch 1.0
-- **ICCV2019**
-- **Sampling Wisely: Deep Image by Top-k Precision Optimization**
-This repository has the source code for the paper "Sampling Wisely: Deep Image by Top-k Precision Optimization" (ICCV2019).
+- **This repository has the source code for the paper "Sampling Wisely: Deep Image by Top-k Precision Optimization" (ICCV2019).**
 
 ## Citing this work
 If you find this work useful in your research, please consider citing:
@@ -31,13 +29,18 @@ If you find this work useful in your research, please consider citing:
 - **bad case** 
 
 ## Installation
-1.Rnstall pytorch1.0, run`conda install pytorch torchvision -c pytorch`
-2.Run `conda install future requests six pillow`
-3.Run `pip install sklearn tqdm`
-4.Run `cd top_k_optimization`
-5.choose right config file in main.py and set it whether you would download and split download and whether you need the dataset with bounding boxes in *_config.py and run `python main.py`
+1. Install pytorch1.0, run`conda install pytorch torchvision -c pytorch`
+
+2. Run `conda install future requests six pillow`
+
+3. Run `pip install sklearn tqdm`
+
+4. Run `cd top_k_optimization`
+
+5. Choose right config file in main.py and set it whether you would download and split download and whether you need the dataset with bounding boxes in *_config.py and run `python main.py`
 
 ## Validation
-#draw TSNE picture
-#choose right config file in test_and_tsne.py and set it whether you would download and split download and whether you need the dataset with bounding boxes in *_config.py
+Draw TSNE picture
+
+Choose right config file in test_and_tsne.py and set it whether you would download and split download and whether you need the dataset with bounding boxes in *_config.py
 Run `python test_and_tsne.py'
