@@ -99,12 +99,7 @@ def make_transform(sz_resize = 256, sz_crop = 227, mean = [128, 117, 104], #224/
 			lambda x: x[[2, 1, 0], ...]
 		) if rgb_to_bgr else Identity()
 	])
-def mkdir(path):
-	import os
-	isExists=os.path.exists(path)
-	if not isExists:
-		os.makedirs(path) 
-	return True
+
 
 class OurSampler(Sampler):
 	def __init__(self, data_source, batch_size,method,n_pos,N):
@@ -112,7 +107,7 @@ class OurSampler(Sampler):
 		self.index_dic = data_source.Index
 		self.pids = list(self.index_dic.keys())
 		self.num_samples = len(self.pids)
-		self.batch_size = (batch_size//2)*2
+		self.batch_size = (batch_size//2) *2
 		self.method = method
 		self.classes = len(data_source.Index)   
 		self.times = self.data_source.sample_nums//self.batch_size
@@ -123,7 +118,68 @@ class OurSampler(Sampler):
 
 	def __iter__(self):
 		ret = []
-		if self.method==0 :#prec@k loss
+		if self.method==2 or self.method==5 or self.method==7 or self.method==1:#clustering or lifted or contrastive or proxy_nca  有重复类
+			for _ in range(self.times):
+				y_=[0 for i in range(self.batch_size)]
+				for i in range(self.batch_size//2):
+					y_[i]=random.randint(0,self.classes-1)
+					y_[i+self.batch_size//2]=y_[i]
+				for i in range(2*self.batch_size//2):
+					ret.append(self.index_dic[int(y_[i])][random.randint(0,len(self.index_dic[int(y_[i])])-1)])
+		if self.method==3 or self.method==4 or self.method==6:#npair or angular or triplet   无重复类
+			for _ in range(self.times):
+				y_=np.array(random.sample(range(self.classes-1), self.batch_size//2))
+				y_=np.concatenate([y_,y_]).tolist()
+				real_index_bag=[]
+				for i in range(self.batch_size):
+					while True:
+						temp_index=random.randint(0,len(self.index_dic[int(y_[i])])-1)
+						real_index=self.index_dic[int(y_[i])][temp_index]
+						if real_index not in real_index_bag:
+							real_index_bag.append(real_index)
+							ret.append(real_index)
+							break
+		if self.method==0:#prec@k loss
+			for _ in range(self.times):
+				flag=0  
+				N=self.N
+				batch_size = self.batch_size//(N+1)
+				K_arr=[]	
+				real_y=torch.zeros((N+1)*batch_size)
+				for i in range(batch_size):
+					classid=random.randint(0,self.classes-1) #random choose a class 1-11318 training class#11317
+					temp=self.index_dic[classid][:len(self.index_dic[classid])]
+					if self.n_pos+1>len(temp):
+						flag=0
+					if self.n_pos+1<len(temp):
+						flag=1
+					K=np.min([self.n_pos+1,len(temp)])-1
+					K_arr.append(K)
+
+					for j in range (K+1):
+						real_y[j+i*(N+1)]=classid
+					for k in range(N-K):
+						while True:
+							neg_id=random.randint(0,self.classes-1)
+							if neg_id!=classid:
+								break
+						real_y[k+K+1+i*(self.N+1)]=neg_id
+				pointer=0
+				if flag==0:
+					for i in range(batch_size):
+						for j in range(K_arr[i]+1):
+							temp_index=self.index_dic[int(real_y[pointer])][j]
+							ret.append(temp_index)
+							pointer+=1
+						for j in range(N-K_arr[i]):
+							temp_index=self.index_dic[int(real_y[pointer])][random.randint(0,len(self.index_dic[int(real_y[pointer])])-1)]
+							ret.append(temp_index)
+							pointer+=1
+				else:
+					for i in range((N+1)*batch_size):
+						temp_index=self.index_dic[int(real_y[i])][random.randint(0,len(self.index_dic[int(real_y[i])])-1)]
+						ret.append(temp_index)
+		if self.method==8 :#another prec@k loss
 			for _ in range(self.times):
 				cnt=0  
 				sample_classes=98
@@ -134,6 +190,26 @@ class OurSampler(Sampler):
 					candidate=self.index_dic[slices[i]][:category_num]
 					if category_num>=self.n_pos+1:
 						candidate=random.sample([candidate[i] for i in range(len(candidate))],self.n_pos+1)
+					for j in range(len(candidate)):
+						cnt+=1
+						ret.append(candidate[j])
+						if cnt==self.batch_size:
+							break_flag=True
+							break
+					if break_flag==True:
+						break
+		if self.method==9 :#sampling matters loss
+			for _ in range(self.times):
+				cnt=0  
+				sample_classes=98
+				slices = random.sample([i for i in range(self.classes)], sample_classes)
+				break_flag=False
+				n_pos=2
+				for i in range(sample_classes):
+					category_num=len(self.index_dic[int(slices[i])])
+					candidate=self.index_dic[slices[i]][:category_num]
+					if category_num>=n_pos:
+						candidate=random.sample([candidate[i] for i in range(len(candidate))],n_pos)
 					for j in range(len(candidate)):
 						cnt+=1
 						ret.append(candidate[j])
@@ -155,11 +231,10 @@ class Preprocess():
 		self.size = 227
 		self.n_pos=n_pos
 		self.N=N
-		mkdir(root)
 
 		if 'CARS196' == dataset_name:
 			if download==True:
-				D.download_and_split_CARS196(root)
+				D.download_split_data.download_and_split_CARS196(root)
 			train_img_path = self.root
 			test_img_path = self.root
 			train_txt_path = os.path.join(self.root,'train.txt')
@@ -169,7 +244,7 @@ class Preprocess():
 				test_txt_path = os.path.join(self.root,'bounding_test.txt')
 		if 'CUB200-2011' == dataset_name:
 			if download==True:
-				D.download_and_split_CUB200_2011(root)
+				D.download_split_data.download_and_split_CUB200_2011(root)
 			train_img_path = os.path.join(self.root,'CUB_200_2011')
 			test_img_path = os.path.join(self.root,'CUB_200_2011')
 			train_txt_path = os.path.join(self.root,'CUB_200_2011','new_train.txt')
@@ -179,7 +254,7 @@ class Preprocess():
 				test_txt_path = os.path.join(self.root,'CUB_200_2011','new_bounding_test.txt')
 		if 'Stanford_Online_Products' == dataset_name:
 			if download==True:
-				D.download_and_split_Stanford_Online_Products(root)
+				D.download_split_data.download_and_split_Stanford_Online_Products(root)
 			train_img_path = self.root
 			test_img_path = self.root
 			train_txt_path = os.path.join(self.root,'new_train.txt')
@@ -191,10 +266,12 @@ class Preprocess():
 										txt_path=test_txt_path,
 										data_transforms=make_transform(is_train=False)) 
 
+		if self.method==0:
+			self.train_batch_size = (self.N+1)*self.train_batch_size
+
 		print("Dataset: "+dataset_name," with bounding_box: ",with_bounding_box)
 		print("Total images in training sets: ",self.dataset_train.sample_nums)
 		self.test_loader = data.DataLoader(dataset=self.dataset_test,batch_size=self.test_batch_size,shuffle=False,num_workers = 4,pin_memory = True)
-		self.transductive_loader = data.DataLoader(dataset=self.dataset_test,batch_size=self.test_batch_size,shuffle=True,num_workers = 4,pin_memory = True)
 		self.test_train_loader = data.DataLoader(dataset=self.dataset_train,batch_size=self.test_batch_size,shuffle=False,num_workers = 4,pin_memory = True)
 		self.train_loader = data.DataLoader(dataset=self.dataset_train,batch_size=self.train_batch_size,
 			sampler=OurSampler(self.dataset_train, batch_size=self.train_batch_size,method=self.method,

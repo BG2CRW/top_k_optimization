@@ -30,39 +30,9 @@ def extract_zip(data_dir,target_path):
 	for file in f.namelist():
 		f.extract(file,target_path)
 def download_and_split_all_datasets(DATA_ROOT):
-	download_and_split_CUB200(DATA_ROOT)
 	download_and_split_CUB200_2011(DATA_ROOT)
 	download_and_split_CARS196(DATA_ROOT)
 	download_and_split_Stanford_Online_Products(DATA_ROOT)
-	split_snapshop(DATA_ROOT)
-
-def download_and_split_CUB200(DATA_ROOT):
-	#CUB200
-	if not os.path.exists(os.path.join(DATA_ROOT,'CUB200')):
-		os.mkdir(os.path.join(DATA_ROOT,'CUB200'))
-	print('Download CUB200 lists.tgz...')
-	maybe_download('lists.tgz', os.path.join(DATA_ROOT,'CUB200'),'http://www.vision.caltech.edu/visipedia-data/CUB-200/lists.tgz')
-	print('Download CUB200 images.tgz...')
-	maybe_download('images.tgz', os.path.join(DATA_ROOT,'CUB200'),'http://www.vision.caltech.edu/visipedia-data/CUB-200/images.tgz')
-	print('Extracting CUB200 lists.tgz...')
-	extract(os.path.join(DATA_ROOT,'CUB200','lists.tgz'), os.path.join(DATA_ROOT,'CUB200'))
-	print('Extracting CUB200 images.tgz...')
-	extract(os.path.join(DATA_ROOT,'CUB200','images.tgz'), os.path.join(DATA_ROOT,'CUB200'))
-	print('Resplit datasets...')
-	root=os.path.join(DATA_ROOT,'CUB200','lists')
-	f=open(os.path.join(root,'files.txt'))
-	f_train=open(os.path.join(root,'new_train.txt'),'w')
-	f_test=open(os.path.join(root,'new_test.txt'),'w')
-	for line in f:
-		if int(line.split('.')[0])<=100:
-			temp=line.strip().split('.')[0]+' '+line.strip()
-			f_train.write(temp+'\n')
-		else:
-			temp=line.strip().split('.')[0]+' '+line.strip()
-			f_test.write(temp+'\n')
-	f.close()
-	f_train.close()
-	f_test.close()
 
 def download_and_split_CUB200_2011(DATA_ROOT):
 	#CUB200-2011

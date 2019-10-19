@@ -131,7 +131,7 @@ def calc_ROC(Y_):
 	ROC=np.mean(interROC, axis=0)
 	return ROC
 
-def calc_mAP_PR_ROC_with_interp(Y_):
+def calc_mAP_PR_ROC(Y_):
 	true_cnt = Y_.sum(1)
 	inter_cnt = 20
 	interPR=np.zeros((Y_.size(0),inter_cnt+1))
@@ -330,20 +330,6 @@ def inference(net,test_loader):
 	X, T, img_path = predict_batchwise(net, test_loader)
 	net.train(net_is_training) # revert to previous training state
 	return X, T, img_path
-def test_snapshop(X, T, metric ,test_k):
-	X_query=X[0:2000,:]
-	T_query=T[0:2000]
-	X_db=X[2000:T.size(0),:]
-	T_db=T[2000:T.size(0)]
-	distances = sklearn.metrics.pairwise.pairwise_distances(X_query,X_db,metric=metric)
-	indices = np.argpartition(distances, kth=[i for i in range(test_k)],axis=1)[:,0:test_k]
-	label_sort = np.array([[T[i] for i in ii] for ii in indices])
-	Y_=torch.eq(torch.from_numpy(label_sort),T_query.view(-1,1))
-	recall = []
-	for k in [1, 3, 5]:
-		r_at_k = calc_recall_at_k_(Y_, k)
-		recall.append(r_at_k)
-	return recall
 
 def get_some_case(X, T, path, test_k, metric):
 	Y_ = assign_by_dist_at_k_with_path(X, T, path,test_k,metric)
@@ -365,7 +351,7 @@ def test(X, T,test_k,metric):
 
 def test_some_scores(X, T, path,metric,nb_classes,name):
 	nmi,mAP,PR,ROC,F1=0,0,0,0,0
-	#compute Y_
+	
 	if not os.path.exists(name+'Y_.npz'):
 		if 'Online' in path[0]:
 			Y_ = assign_by_dist_at_k(X, T, min(500,T.size(0)-1),metric)
@@ -377,9 +363,8 @@ def test_some_scores(X, T, path,metric,nb_classes,name):
 		npzfile=np.load(name+'Y_.npz')
 		Y_ = npzfile['arr_0']
 	Y_ = torch.from_numpy(Y_)
-	#mAP=calc_mAP(Y_)
-
-	#compute mAP&PR&ROC
+	mAP=calc_mAP(Y_)
+	'''
 	if 'Online' not in path[0]:
 		mAP,PR,ROC=calc_mAP_PR_ROC_without_interp(Y_)
 	else:
@@ -392,8 +377,8 @@ def test_some_scores(X, T, path,metric,nb_classes,name):
 			Y_real_sum[i]=T_index[T[i]]
 
 		mAP,PR,ROC=calc_mAP_PR_ROC_for_part_sort(Y_,Y_real_sum)
-
-	#compute NMI&F1
+	'''
+	
 	if 'Online' in path[0]:
 		nb_classes=12
 		for i in range(len(path)):
