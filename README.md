@@ -1,5 +1,4 @@
-# top_k_optimization in PyTorch 1.0
-- **This repository has the source code for the paper "Sampling Wisely: Deep Image by Top-k Precision Optimization" (ICCV2019).**
+# Official implementation of "Sampling Wisely: Deep Image by Top-k Precision Optimization"(ICCV2019)
 
 ## Citing this work
 If you find this work useful in your research, please consider citing:
@@ -17,6 +16,20 @@ If you find this work useful in your research, please consider citing:
 - **CARS196(with or without bounding box)** 
 - **Stanford Online Product** 
 
+## LOSS
+- **smooth prec@k loss** 
+- **angular loss** 
+- **npair loss** 
+- **lifted loss** 
+- **semi-hard triplet loss** 
+- **contrastive loss** 
+- **arcface loss** 
+- **cosface loss(LMCL)** 
+- **proxyNCA** 
+- **A-softmax loss** 
+- **L-softmax loss** 
+- **softmax loss** 
+
 ## VALIDATIONS
 - **precsion@k** 
 - **recall@k** 
@@ -25,8 +38,8 @@ If you find this work useful in your research, please consider citing:
 - **mAP** 
 
 ## TOOLS
-- **TSNE**
-- **bad case** 
+- **t-SNE visualization**
+- **choose bad case** 
 
 ## Installation
 1. Install pytorch1.0, run`conda install pytorch torchvision -c pytorch`
@@ -40,7 +53,7 @@ If you find this work useful in your research, please consider citing:
 5. Choose right config file in main.py and set it whether you would download and split download and whether you need the dataset with bounding boxes in *_config.py and run `python main.py`
 
 ## Validation
-Draw TSNE picture
+Draw t-SNE picture
 
 Choose right config file in test_and_tsne.py and set it whether you would download and split download and whether you need the dataset with bounding boxes in *_config.py
 Run `python test_and_tsne.py'

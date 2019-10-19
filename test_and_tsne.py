@@ -1,5 +1,4 @@
 import torch
-#import config.config_CUB200 as cfg 
 #import config.config_CUB200_2011 as cfg
 #import config.config_CARS196 as cfg 
 import config.config_ONLINE_PRODUCT as cfg 
